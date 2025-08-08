@@ -1,0 +1,2579 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador Completo de Examen Complexivo</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+        .question {
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            display: none;
+        }
+        .question.active {
+            display: block;
+        }
+        .question-text {
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        .options {
+            margin-left: 20px;
+        }
+        .option {
+            margin-bottom: 10px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .option:hover {
+            background-color: #f0f0f0;
+        }
+        .option input {
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        .progress {
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .result {
+            text-align: center;
+            font-size: 24px;
+            margin-top: 20px;
+            display: none;
+        }
+        .category-selector {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .category-selector select {
+            padding: 8px;
+            font-size: 16px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            width: 300px;
+        }
+        .timer {
+            text-align: center;
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .question-counter {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+        .exam-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #ecf0f1;
+            border-radius: 4px;
+        }
+        .checkbox-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .checkbox-option {
+            display: flex;
+            align-items: center;
+        }
+        .checkbox-option input {
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Simulador Completo de Examen Complexivo</h1>
+        
+        <div class="exam-info">
+            <div><strong>Total preguntas:</strong> <span id="total-questions-all">225</span></div>
+            <div><strong>Tiempo estimado:</strong> 120 minutos</div>
+        </div>
+        
+        <div class="category-selector">
+            <select id="category">
+                <option value="all">Todas las categorías (225 preguntas)</option>
+                <option value="metodologia">Metodología de Desarrollo (50)</option>
+                <option value="tendencias">Tendencias Actuales (50)</option>
+                <option value="poo">Programación Orientada a Objetos (50)</option>
+                <option value="emprendimiento">Emprendimiento (25)</option>
+                <option value="diseño">Diseño Multimedia (50)</option>
+            </select>
+            
+            <div class="checkbox-options">
+                <div class="checkbox-option">
+                    <input type="checkbox" id="show-answered" checked>
+                    <label for="show-answered">Mostrar solo preguntas sin responder</label>
+                </div>
+                <div class="checkbox-option">
+                    <input type="checkbox" id="random-order">
+                    <label for="random-order">Orden aleatorio</label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="timer">
+            Tiempo restante: <span id="time">120:00</span>
+        </div>
+        
+        <div class="progress">
+            Pregunta <span id="current-question">1</span> de <span id="total-questions">50</span>
+            <div class="question-counter" id="answered-counter">0 respondidas</div>
+        </div>
+        
+        <div id="questions-container">
+            <!-- Las preguntas se insertarán aquí dinámicamente -->
+        </div>
+        
+        <div class="navigation">
+            <button id="prev-btn" disabled>Anterior</button>
+            <button id="next-btn">Siguiente</button>
+            <button id="submit-btn" style="display: none;">Finalizar Examen</button>
+            <button id="mark-btn">Marcar para revisar</button>
+        </div>
+        
+        <div class="result" id="result">
+            <!-- El resultado se mostrará aquí -->
+        </div>
+    </div>
+
+    <script>
+        // Banco completo de preguntas (225 en total)
+        const questions = [
+            // ==============================================
+            // METODOLOGÍA DE DESARROLLO (50 preguntas)
+            // ==============================================
+            {
+                category: "metodologia",
+        text: "Cada metodología de desarrollo de software ha sido desarrollada, apoyada o inventada por varias personas, entidades o empresas, en este sentido el Método Kanban se trata de un método visual de gestión de proyectos que permite a los equipos visualizar sus flujos de trabajo y la carga de trabajo, que fue inventado por:",
+        options: ["Microsoft", "Toyota", "IBM"],
+        answer: 1
+    },
+    {
+        category: "metodologia",
+        text: "La metodología estándar más utilizada para el análisis, diseño, implementación y documentación de sistemas orientados a objetos es:",
+        options: ["Incremental", "Rational Unified Process", "SSADM"],
+        answer: 1
+    },
+    {
+        category: "metodologia",
+        text: "El diagrama que permite representar las funcionalidades que el sistema ofrece a los usuarios (actores) es:",
+        options: ["Diagrama de Clases", "Diagrama de Objetos", "Diagrama de Casos de Uso"],
+        answer: 2
+    },
+    {
+        category: "metodologia",
+        text: "El Owner Team es conocido también como:",
+        options: ["Equipo de planificación", "Equipo de realización", "Equipo de programadores"],
+        answer: 1
+    },
+    {
+        category: "metodologia",
+        text: "Cuando diseñamos un aplicativo es recomendable que al menos tomemos en cuenta tres niveles de usuario:",
+        options: ["Gerente, Contador, Programador", "Administrador, Programador, Usuario", "Administrador, Operador, Reportes"],
+        answer: 2
+    },
+    {
+        category: "metodologia",
+        text: "La metodología de desarrollo MSF, fue desarrollada por:",
+        options: ["IBM", "Microsoft", "Toyota"],
+        answer: 1
+    },
+    {
+        category: "metodologia",
+        text: "Un diagrama de casos está compuesto, principalmente de 3 elementos:",
+        options: ["Actores, Casos de uso y Relaciones", "Admin, User Master, Reportes", "Actores, Director y Programadores"],
+        answer: 0
+    },
+    {
+        category: "metodologia",
+        text: "La metodología Merise fue desarrollada por el ministerio de industrias de:",
+        options: ["Alemania", "Francia", "Japón"],
+        answer: 1
+    },
+    {
+        category: "metodologia",
+        text: "Microsoft desarrolló la metodología:",
+        options: ["Kanban", "Prototipado", "MSF"],
+        answer: 2
+    },
+    {
+        category: "metodologia",
+        text: "El objetivo que está directamente relacionado con el Tema del Proyecto es:",
+        options: ["Objetivo Específico", "Objetivo General", "Objetivo Final"],
+        answer: 1
+    },
+    {
+        category: "metodologia",
+        text: "El Proceso Unificado de Rational. Es un Proceso de desarrollo de software, desarrollado y financiado por la empresa Rational Software, actualmente propiedad de:",
+        options: ["Microsoft", "IBM", "Yoyota"],
+        answer: 1
+    },
+    {
+        category: "metodologia",
+        text: "La siguiente definición del Ciclo de Vida del Software: 'Un marco común para los procesos del ciclo de vida de los programas informáticos...' Corresponde a la norma:",
+        options: ["ISO/IEC/IEEE 29148:2018", "ISO/IEC 17025:2017", "ISO/IEC/IEEE 12207:2017"],
+        answer: 2
+    },
+    {
+        category: "metodologia",
+        text: "Los sistemas de información son considerados el centro neurálgico de toda organización.",
+        options: ["Verdadero", "Falso"],
+        answer: 0
+    },
+    {
+        category: "metodologia",
+        text: "Los principios del Manifiesto Ágil son 15",
+        options: ["Verdadero", "Falso"],
+        answer: 1
+    },
+    {
+        category: "metodologia",
+        text: "La Metodología MSF se adapta a proyectos de cualquier dimensión y de cualquier tecnología.",
+        options: ["Verdadero", "Falso"],
+        answer: 0
+    },
+    {
+        category: "metodologia",
+        text: "En Desarrollo ágil de Software, la mayoría de los equipos ágiles están localizados en varias oficinas equipadas con tecnología actualizada.",
+        options: ["Verdadero", "Falso"],
+        answer: 1
+    },
+    {
+        category: "metodologia",
+        text: "La Metodología XP se define como especialmente adecuada para proyectos con requisitos imprecisos y muy cambiantes donde existen altos riesgos técnicos.",
+        options: ["Verdadero", "Falso"],
+        answer: 0
+    },
+    {
+        category: "metodologia",
+        text: "Podemos definir las metodologías ágiles como un conjunto de tareas y procedimientos dirigidos a la gestión de obtención de datos.",
+        options: ["Verdadero", "Falso"],
+        answer: 1
+    },
+    {
+        category: "metodologia",
+        text: "UML no es un lenguaje de programación",
+        options: ["Verdadero", "Falso"],
+        answer: 0
+    },
+    {
+        category: "metodologia",
+        text: "El Ciclo de Vida del Software es el mismo en todas las Metodologías de Desarrollo",
+        options: ["Verdadero", "Falso"],
+        answer: 1
+    },
+    {
+        category: "metodologia",
+        text: "El Diagrama de Casos de Uso, se utiliza principalmente en la fase de análisis de requerimientos",
+        options: ["Verdadero", "Falso"],
+        answer: 0
+    },
+    {
+        category: "metodologia",
+        text: "Scrum es una metodología ágil y flexible para gestionar el desarrollo de software, cuyo principal objetivo es minimizar el retorno de la inversión para su empresa (ROI).",
+        options: ["Verdadero", "Falso"],
+        answer: 0
+    },
+    {
+        category: "metodologia",
+        text: "Los diagramas UML no describen los límites, la estructura y el comportamiento del sistema y los objetos que contiene.",
+        options: ["Verdadero", "Falso"],
+        answer: 1
+    },
+    {
+        category: "metodologia",
+        text: "Las metodologías de desarrollo de software no tienen como objetivo presentar un conjunto de técnicas tradicionales y modernas de modelado de sistemas que permitan desarrollar software de calidad.",
+        options: ["Verdadero", "Falso"],
+        answer: 1
+    },
+    {
+        category: "metodologia",
+        text: "El diagrama de casos de uso permite representar las funcionalidades que el sistema ofrece a los usuarios (actores).",
+        options: ["Verdadero", "Falso"],
+        answer: 0
+    },
+    {
+        category: "metodologia",
+        text: "Se le llama actor a toda entidad interna al sistema que guarda una relación con este y que le demanda una funcionalidad.",
+        options: ["Verdadero", "Falso"],
+        answer: 1
+    },
+    {
+        category: "metodologia",
+        text: "Las metodologías de desarrollo de software tienen como objetivo presentar un conjunto de técnicas tradicionales y modernas de modelado de sistemas que permitan desarrollar software de calidad, incluyendo ___ de construcción y criterios de comparación de modelos de sistemas.",
+        options: ["software", "heurísticas", "objetivo", "criterios", "modelado"],
+        answer: 1
+    },
+    {
+        category: "metodologia",
+        text: "El Proceso Unificado de Rational Su principal objetivo es asegurar la producción de software de alta ___, el cual llega a las necesidades del cliente final, por medio de un horario y presupuesto predecibles.",
+        options: ["calidad", "estándar", "sistemas", "objetivos", "presupuesto"],
+        answer: 0
+    },
+    {
+        category: "metodologia",
+        text: "La metodología de desarrollo de software en ingeniería de software es un marco de trabajo usado para estructurar, planificar y controlar el proceso de desarrollo en sistemas de información. Se refiere a un ___ (entorno o marco de trabajo).",
+        options: ["trabajo", "planificar", "software", "framework", "desarrollo"],
+        answer: 3
+    },
+    {
+        category: "metodologia",
+        text: "UML es una herramienta poderosa para el desarrollo de ___ moderno. Permite representar gráficamente la estructura y el comportamiento de un sistema.",
+        options: ["sistema", "desarrollo", "analista", "software", "desarrollador"],
+        answer: 3
+    },
+    {
+        category: "metodologia",
+        text: "Los métodos ágiles también enfatizan que el software ___ es la primera medida del progreso.",
+        options: ["progreso", "indisciplinados", "métodos", "comunicaciones", "funcional"],
+        answer: 4
+    },
+    {
+        category: "metodologia",
+        text: "En el contexto de ingeniería del software, un ___ de caso de uso representa a un sistema o subsistema como un conjunto de interacciones.",
+        options: ["conjunto", "evento", "diagrama", "representa", "actores"],
+        answer: 2
+    },
+    {
+        category: "metodologia",
+        text: "Las Metodologías de Desarrollo para Aplicaciones Móviles se enfocan en maximizar la eficiencia del ___, garantizar la calidad del producto final y adaptarse a las necesidades específicas del cliente y los usuarios.",
+        options: ["desarrollo", "maximizar", "usuarios", "necesidad", "producto"],
+        answer: 0
+    },
+    {
+        category: "metodologia",
+        text: "El desarrollo de aplicaciones móviles es un campo en constante evolución que requiere un enfoque metodológico sólido para garantizar el éxito. Esta metodología abarca desde la concepción de la idea hasta el lanzamiento de la aplicación, pasando por ___ cruciales como el diseño, la programación y las pruebas.",
+        options: ["éxito", "Evolución", "Etapas", "Lanzamiento", "Idea"],
+        answer: 2
+    },
+    {
+        category: "metodologia",
+        text: "El ciclo de vida del desarrollo del software, contempla las ___ necesarias para validar el desarrollo del software y así garantizar que este cumpla los requisitos.",
+        options: ["requisitos", "fases", "métodos", "desarrollo", "procedimientos"],
+        answer: 1
+    },
+    {
+        category: "metodologia",
+        text: "Una de las características de la metodología XP es el cambio constante, por eso cuando el código de una función está listo se somete a una serie de ___ unitarias continuas, con el objetivo de corregir fallas periódicamente.",
+        options: ["código", "pruebas", "cambio", "fallas", "somete"],
+        answer: 1
+    },
+    {
+        category: "metodologia",
+        text: "Los aspectos claves de la Metodología SSADM son:",
+        options: [
+            "Énfasis en los usuarios: sus requisitos y participación",
+            "Determinación de objetivos",
+            "Definición del proceso de producción: qué hacer, cuándo y cómo",
+            "Asignación de tareas y recursos",
+            "Tres puntos de vista: datos, eventos, procesos",
+            "Diseño del sistema: modular o estructural, interfaz de usuario y diseño de DB",
+            "Máxima flexibilidad en herramientas y técnicas de implementación"
+        ],
+        answer: [0, 4, 5]
+    },
+    {
+        category: "metodologia",
+        text: "Los Beneficios de usar la metodología Merise son:",
+        options: [
+            "Aplicable a la programación orientada a objetos",
+            "Claridad en la separación entre lo lógico y lo físico",
+            "Trabajar todo el equipo del proyecto en una sola oficina",
+            "Facilidad para analizar y documentar grandes sistemas",
+            "Validación de los procesos por el Manager",
+            "Fuerte enfoque en datos y procesos",
+            "Facilidad de documentación",
+            "Buen soporte para sistemas estructurados y documentados"
+        ],
+        answer: [1, 3, 5, 6, 7]
+    },
+    {
+        category: "metodologia",
+        text: "Los roles de la metodología Kanban son:",
+        options: [
+            "Dueño del Proceso",
+            "Director del Proyecto",
+            "Miembros del Equipo",
+            "Facilitador",
+            "Consultor externo",
+            "Patrocinador Ejecutivo",
+            "Tester"
+        ],
+        answer: [0, 2, 3]
+    },
+    {
+        category: "metodologia",
+        text: "El lenguaje UML en su conjunto tiene algunas características que interesa resaltar:",
+        options: [
+            "Es muy sencillo. Pese a que si es usado de forma completa puede llegar a complicarse, lo normal es que se simplifique",
+            "UML consolida muchas de las notaciones y conceptos más usadas orientados a objetos",
+            "Es capaz de modelar todo tipo de sistemas",
+            "UML no determina un proceso definido (no se comporta como una receta de cocina) los procesos son racionales y dinámicos",
+            "Es visual y, por lo tanto, intuitivo",
+            "UML se presta con facilidad al diseño de sistemas distribuidos",
+            "Bien ejecutado aporta un conjunto considerable de buenas prácticas",
+            "UML al no ser un método de desarrollo es independiente del ciclo de desarrollo",
+            "Es independiente del desarrollo, del lenguaje y de la plataforma"
+        ],
+        answer: [1, 2, 3, 4, 6, 8]
+    },
+    {
+        category: "metodologia",
+        text: "Las fases de la Programación Extrema son:",
+        options: [
+            "Planificación",
+            "Aprendizaje",
+            "Diseño",
+            "Estudio de viabilidad",
+            "Codificación",
+            "Retroalimentación",
+            "Pruebas",
+            "Implementación",
+            "Lanzamiento"
+        ],
+        answer: [0, 2, 4, 6]
+    },
+    {
+        category: "metodologia",
+        text: "Los Roles de la metodología Crystal son:",
+        options: [
+            "Patrocinador Ejecutivo",
+            "Entrenador (coach)",
+            "Diseñador Principal",
+            "Tracker",
+            "Diseñador Programador",
+            "Jefe de proyectos",
+            "Coordinator",
+            "Consultor",
+            "Verificador"
+        ],
+        answer: [1, 2, 3, 4, 5]
+    },
+    {
+        category: "metodologia",
+        text: "De la siguiente lista seleccione los que son Diagramas UML Estructurales:",
+        options: [
+            "Diagrama de Tiempos",
+            "Diagrama de Clases",
+            "Diagrama de Actividades",
+            "Diagrama de Objetos",
+            "Diagrama de Secuencia",
+            "Diagrama de Perfiles",
+            "Diagrama de Casos de uso",
+            "Diagrama de Paquetes",
+            "Diagrama de Implementación",
+            "Diagrama de Componentes"
+        ],
+        answer: [1, 3, 5, 7, 9]
+    },
+    {
+        category: "metodologia",
+        text: "Los valores fundamentales del Manifiesto Ágil son:",
+        options: [
+            "Valoramos más el hardware que los sistemas informáticos",
+            "Valoramos más a los individuos y su interacción que a los procesos y las herramientas",
+            "Valoramos más la documentación exhaustiva que el software funcional",
+            "Valoramos más el software que funciona que la documentación exhaustiva",
+            "Valoramos más el seguimiento de un plan que la respuesta al cambio",
+            "Valoramos más la colaboración con el cliente que la negociación contractual",
+            "Valoramos más la respuesta del usuario que el diseño del programador",
+            "Valoramos más la respuesta al cambio que el seguimiento de un plan"
+        ],
+        answer: [1, 3, 5, 7]
+    },
+    {
+        category: "metodologia",
+        text: "El diagrama de casos de uso, dependiendo de la profundidad que le demos, puede ser utilizado para muchos fines, entre ellos podemos encontrar los siguientes:",
+        options: [
+            "Representar los requisitos funcionales",
+            "Representar los requisitos no funcionales",
+            "Representar los actores que se comunican con el sistema",
+            "Representar de forma gráfica la programación",
+            "Representar las relaciones entre requisitos funcionales y actores",
+            "Comunicarse con la red",
+            "Comunicarse de forma precisa entre cliente y desarrollador",
+            "Representar la interacción entre máquina y humano",
+            "Guíar el desarrollo del sistema"
+        ],
+        answer: [0, 2, 4, 6, 8]
+    },
+    {
+        category: "metodologia",
+        text: "Las técnicas más importantes que se utilizan en la Metodología SSADM son:",
+        options: [
+            "Modelado de datos lógicos",
+            "Modelado del Proyecto",
+            "Modelado de flujo de datos",
+            "Modelado de la Base de Datos",
+            "Modelado Entidad Evento",
+            "Modelado de la interfaz"
+        ],
+        answer: [0, 2, 4]
+    },
+    {
+        category: "metodologia",
+        text: "Las fases de la metodología RUP son:",
+        options: [
+            "Planificación",
+            "Inicio",
+            "Elaboración",
+            "Planificación",
+            "Construcción",
+            "Integración",
+            "Transición",
+            "Mantenimiento"
+        ],
+        answer: [1, 2, 4, 6]
+    },
+    {
+        category: "metodologia",
+        text: "Los Diagramas UML de comportamiento se subdividen entre otros en: Diagramas de Interacción que a su vez se clasifican en:",
+        options: [
+            "Diagrama de Actividades",
+            "Diagrama de Tiempos",
+            "Diagrama de Paquetes",
+            "Diagrama de Comunicación",
+            "Diagrama de Objetos",
+            "Diagrama Global de interacciones",
+            "Diagrama de Implementación",
+            "Diagrama de Secuencia"
+        ],
+        answer: [0, 1, 3, 7]
+    },
+    {
+        category: "metodologia",
+        text: "Las metodologías de desarrollo de acuerdo con sus características y los objetivos que persiguen se pueden dividir en:",
+        options: [
+            "Metodologías Robustas o Tradicionales",
+            "Metodologías Obsoletas",
+            "Metodologías Ágiles",
+            "Metodologías de Inteligencia Artificial"
+        ],
+        answer: [0, 2]
+    },
+    {
+        category: "metodologia",
+        text: "Las técnicas más utilizadas para obtener datos para el desarrollo de un proyecto son:",
+        options: [
+            "Investigación de campo",
+            "Entrevista",
+            "Investigación Social",
+            "Observación",
+            "Scrum",
+            "Encuesta"
+        ],
+        answer: [0, 1, 3, 5]
+            },
+            // Continúa con las 40 preguntas restantes de metodología...
+            // Preguntas 11-50 de metodología aquí...
+
+            // ==============================================
+            // TENDENCIAS ACTUALES (50 preguntas)
+            // ==============================================
+            {
+                "category": "tendencias",
+        "text": "¿Qué métodos HTTP soporta una API REST?",
+        "options": [
+            "Get_post_put_delete",
+            "Add_create, remove, modify",
+            "Insert.update, select, delete",
+            "Send_receive"
+        ],
+        "answer": 0
+    },
+    {
+        "category": "tendencias",
+        "text": "Los clientes pueden almacenar datos como deseos, sin tener que cumplir con algunas normas predeterminadas:",
+        "options": [
+            "No esquema",
+            "Diseñado para grandes volúmenes",
+            "Base de datos Clave-Valor",
+            "Modelos de datos no relacionales"
+        ],
+        "answer": 0
+    },
+    {
+        "category": "tendencias",
+        "text": "Integración con repositorios de código remoto:",
+        "options": [
+            "Drive",
+            "Python",
+            "GitHub",
+            "Énfasis de síntesis"
+        ],
+        "answer": 2
+    },
+    {
+        "category": "tendencias",
+        "text": "Qué significa (MMS):",
+        "options": [
+            "Amazon Wide Services",
+            "Amazon web services",
+            "Amazon Web Services",
+            "Web Services Amazon"
+        ],
+        "answer": 2
+    },
+    {
+        "category": "tendencias",
+        "text": "Una característica de los servicios web:",
+        "options": [
+            "Es una herramienta de fácil uso y difícil acceso",
+            "No hace posible el mercantilo de mensajes SOAP (Simple Object Access Protocol)",
+            "Su alcancen es natural",
+            "Permite la interoperabilidad y el uso de multiplataformas"
+        ],
+        "answer": 3
+    },
+    {
+        "category": "tendencias",
+        "text": "Una característica de los servicios web es:",
+        "options": [
+            "Se apoya en el formato HTTP (Protección de transferencia de hipertexto)",
+            "No proces servicios integrados",
+            "Su formato está basado en párrafos.",
+            "No permite la interoperabilidad y el uso de multiplataformas"
+        ],
+        "answer": 0
+    },
+    {
+        "category": "tendencias",
+        "text": "Los webs services se comunican a través de formatos:",
+        "options": [
+            "SML y XML",
+            "HTTP y SOAP",
+            "HTTP y XML",
+            "HTTP y SML"
+        ],
+        "answer": 1
+    },
+    {
+        "category": "tendencias",
+        "text": "Un web service puede ser utilizado con los protocolos:",
+        "options": [
+            "HTTP únicamente",
+            "SOAP (XML) REST, XML-BPC",
+            "TCP-P, LAN",
+            "Ninguna de las anteriores"
+        ],
+        "answer": 1
+    },
+    {
+        "category": "tendencias",
+        "text": "La arquitectura de un web service estandarizado se basa en el uso de:",
+        "options": [
+            "El cliente del servicio web o service provider",
+            "El corredor de servicio o service broker",
+            "El proveedor del servicio web o service cliente",
+            "El solicitante del servicio web o service cliente"
+        ],
+        "answer": 1
+    },
+    {
+        "category": "tendencias",
+        "text": "Ventaja de cloud computing:",
+        "options": [
+            "Ninguna de las anteriores",
+            "Acceso cuando quieras y donde quieras, solo con una conexión a internet",
+            "Acceso mediante APP móvil solamente",
+            "Compra de servidores robustos"
+        ],
+        "answer": 1
+    },
+    {
+        "category": "tendencias",
+        "text": "SGBD proviene de:",
+        "options": [
+            "Sistema global de bases de datos",
+            "Ninguna de las anteriores",
+            "Sistema de gestión de bases de datos",
+            "Sistema de gestión de basado en datos"
+        ],
+        "answer": 2
+    },
+    {
+        "category": "tendencias",
+        "text": "SGBD proviene de:",
+        "options": [
+            "Sistema global de bases de datos",
+            "Sistema de gestión de basado en datos",
+            "Ninguna de las anteriores",
+            "Sistema de gestión de bases de datos"
+        ],
+        "answer": 3
+    },
+    {
+        "category": "tendencias",
+        "text": "La base de datos NoSQL Clave-valor:",
+        "options": [
+            "Representan a menudo como un objeto o un documento de tipo JSON porque es un modelo de datos eficiente e intuitivo para los desarrolladores",
+            "Ninguna de las anteriores",
+            "Son altamente dividido y permiten escalado horizontal a escalas que otros tipos de bases de datos no pueden alcanzar.",
+            "Facilitar la creación y la ejecución de aplicaciones que funciona con conjuntos de datos altamente conectados"
+        ],
+        "answer": 0
+    },
+    {
+        "category": "tendencias",
+        "text": "Cloud computing:",
+        "options": [
+            "Ninguna de las anteriores",
+            "Es ofrecer servicios a través de la conectividad y gran escala de Internet",
+            "Son aplicaciones de servicios web provenientes de la arquitectura de software REST",
+            "Simple Object Access Protocol"
+        ],
+        "answer": 1
+    },
+    {
+        "category": "tendencias",
+        "text": "¿Qué es Web Service?",
+        "options": [
+            "Esta tecnología permite el intercambio de datos entre aplicaciones",
+            "Esa tecnología permite el análisis de datos",
+            "La información que se transmite por internet y está visualizando por un navegador",
+            "Esta tecnología aporta en la comunicación entre equipos de la misma red."
+        ],
+        "answer": 0
+    },
+    {
+        "category": "tendencias",
+        "text": "Las bases de datos NoSQL generalmente están diseñadas para escalar usando clústeres distribuidos de hardware en lugar de escalar añadiendo servidores caros y sólidos. Algunos proveedores de la nube manejan estas administraciones. Este atributo se llama:",
+        "options": [
+            "Alto rendimiento",
+            "Altamente funcional",
+            "Escalabilidad",
+            "Recalibilidad"
+        ],
+        "answer": 2
+    },
+    {
+        "category": "tendencias",
+        "text": "ERP tiene el siguiente significado:",
+        "options": [
+            "Enterprise Resource Playing",
+            "Extended Resource Planning",
+            "Enterprise Remaining Planning",
+            "Enterprise Resource Planning"
+        ],
+        "answer": 3
+    },
+    {
+        "category": "tendencias",
+        "text": "El protocolo SOAP (Simple Object Access Protocol):",
+        "options": [
+            "Depende del protocolo de transporte subyacente",
+            "Es el protocolo usado en los servicios web para intercambio de mensajes entre aplicaciones.",
+            "Puede estar escrito en cualquier lenguaje de programación: Java, html, .net",
+            "No permite enviar mensajes"
+        ],
+        "answer": 1
+    },
+    {
+        "category": "tendencias",
+        "text": "¿Node es un entorno de programación basado en el lenguaje de programación?",
+        "options": [
+            "PHP",
+            "Python",
+            "JavaScript",
+            "Java"
+        ],
+        "answer": 2
+    },
+    {
+        "category": "tendencias",
+        "text": "¿Cuándo utilizar una base de datos SQL?",
+        "options": [
+            "Cuando el volumen de mis datos no crece o crece poco",
+            "Ninguna de las anteriores",
+            "Cuando el volumen de datos crece muy rápidamente en momentos puntuales",
+            "Cuando las necesidades de proceso no se pueden proveer"
+        ],
+        "answer": 0
+    },
+    {
+        "category": "tendencias",
+        "text": "¿Para la transferencia de información un servicio web tiene algunos tipos de formatos que son?",
+        "options": [
+            "Archivos planos o de texto (xix)",
+            "Archivos planos csv",
+            "Ninguna de las anteriores",
+            "XML y JSON"
+        ],
+        "answer": 3
+    },
+    {
+        "category": "tendencias",
+        "text": "Pensar en migrar mis bases de datos actuales a NoSQL por ser una nueva tecnología son:",
+        "options": [
+            "Una idea errónea ya que NoSQL no es reemplazo de SQL",
+            "No se puede saber",
+            "Muy buena idea ya que puedo almacenar mis datos.",
+            "Ningunas de las anteriores"
+        ],
+        "answer": 0
+    },
+    {
+        "category": "tendencias",
+        "text": "Node es un sistema del lado del:",
+        "options": [
+            "Buscador",
+            "Navegador",
+            "Cliente",
+            "Servidor"
+        ],
+        "answer": 3
+    },
+    {
+        "category": "tendencias",
+        "text": "Seleccione cuál de los siguientes enunciados corresponde a los beneficios del SOAP:",
+        "options": [
+            "Alto consumo de dinero e implementación",
+            "Dependencia exclusiva a una sola persona con conocimiento de SOAP",
+            "Reducción a la dependencia tecnológica",
+            "Ninguna de las anteriores"
+        ],
+        "answer": 2
+    },
+    {
+        "category": "tendencias",
+        "text": "Seleccione la definición adecuada a SOAP:",
+        "options": [
+            "Es una Aplicación de Objetos de Software",
+            "Protocolo simple de acceso Orientado a Software",
+            "Protocolo simple de acceso a objetos simples",
+            "Es una Arquitectura de Orientado de Servicios"
+        ],
+        "answer": 1
+    },
+    {
+        "category": "tendencias",
+        "text": "Los tipos de bases de datos NoSQL son:",
+        "options": [
+            "Bases telefónicas, Bases orientados a objetos y Bases de propósito general",
+            "Bases de datos Clave-valor, Bases de datos documentales, Bases de datos en grafo, Bases de datos orientados a objetos",
+            "Bases de registro, Bases autónomas y Bases de propósito general",
+            "Ninguna de las anteriores"
+        ],
+        "answer": 1
+    },
+    {
+        "category": "tendencias",
+        "text": "NoSQL significa:",
+        "options": [
+            "Not SQL",
+            "Not only SQL",
+            "Ninguna de las anteriores"
+        ],
+        "answer": 1
+    },
+    {
+        "category": "tendencias",
+        "text": "La arquitectura de un web service estandarizado se basa en el uso de un componente:",
+        "options": [
+            "El solicitante del servicio web o service cliente",
+            "El solicitante del servicio web o service requester",
+            "El cliente del servicio web o service provider"
+        ],
+        "answer": 1
+    },
+    {
+        "category": "tendencias",
+        "text": "El lenguaje que permite definir la interfaz, concretamente operaciones y tipos de datos de un servicio web es:",
+        "options": [
+            "UDDI",
+            "SOAP",
+            "SAM v.1.",
+            "WSDL"
+        ],
+        "answer": 3
+    },
+    {
+        "category": "tendencias",
+        "text": "Cuál es un servicio web:",
+        "options": [
+            "Aplicación Web RESTRitled",
+            "Servicios Web SOEP",
+            "Servicios Web SOAP",
+            "Servicios Web RESTRitled"
+        ],
+        "answer": 2
+    },
+    {
+        "category": "tendencias",
+        "text": "Un lenguaje XML que define la arquitectura y formato de los mensajes. Dichos sistemas normalmente contienen una descripción legible:",
+        "options": [
+            "servicios Web RESThilled",
+            "Base de Datos",
+            "servicios Web SOAP",
+            "WSQL"
+        ],
+        "answer": 2
+    },
+    {
+        "category": "tendencias",
+        "text": "Google proporciona una:",
+        "options": [
+            "Modelo de servicio",
+            "Interfaz de servicio",
+            "Planilla de servicio",
+            "Diseño de servicio"
+        ],
+        "answer": 1
+    },
+    {
+        "category": "tendencias",
+        "text": "El solicitante puede comunicarse con el proveedor de servicios para enviar una solicitud SOAP en forma de:",
+        "options": [
+            "Datos HTTP al servidor",
+            "Texto HTTP al servidor",
+            "Solicitud XML al servidor",
+            "Mensaje HTTP al servidor"
+        ],
+        "answer": 2
+    },
+    {
+        "category": "tendencias",
+        "text": "AWS se puede implementar utilizando los tipos de servicios web:",
+        "options": [
+            "SOAP o UDDI",
+            "SOAP o Google",
+            "SOAP o REST",
+            "SOAP o HTTP"
+        ],
+        "answer": 2
+    },
+    {
+        "category": "tendencias",
+        "text": "Los servicios web pueden ayudar a habilitar un nuevo modelo comercial en:",
+        "options": [
+            "Amazon Web Services",
+            "T-Mobile",
+            "Google",
+            "Ninguna"
+        ],
+        "answer": 0
+    },
+    {
+        "category": "tendencias",
+        "text": "Buenas prácticas para el desarrollo nativo en Cloud:",
+        "options": [
+            "Este modelo permite construir aplicaciones portables, escalables horizontalmente, automatizadas, trasalales, observables y robustas",
+            "Todas las opciones son correctas",
+            "El desarrollo nativo en cloud no se basa en la idea de que la concepción y entrega de software es un servicio",
+            "En este orden de ideas, la arquitectura de las aplicaciones es, por lo tanto, un conjunto de servicios, esto es, elementos independientes que se comunican entre sí"
+        ],
+        "answer": 1
+    },
+    {
+        "category": "tendencias",
+        "text": "A que hace referencia, escalar mediante el modelo de proceso:",
+        "options": [
+            "Concurrencia",
+            "Configuraciones",
+            "Procesos",
+            "Ninguno"
+        ],
+        "answer": 2
+    },
+    {
+        "category": "tendencias",
+        "text": "Hacer el sistema más robusto intentando conseguir inicios rápidos y finalizaciones seguras:",
+        "options": [
+            "Ninguno",
+            "Desechabilidad",
+            "Paridad en desarrollo y producción",
+            "Concurrencia"
+        ],
+        "answer": 1
+    },
+    {
+        "category": "tendencias",
+        "text": "Los archivos de Amazon se almacenan en:",
+        "options": [
+            "Carpeta",
+            "Volúmenes",
+            "Documentos",
+            "Fotos"
+        ],
+        "answer": 1
+    },
+    {
+        "category": "tendencias",
+        "text": "Que establece la escalabilidad horizontal en los web servicios:",
+        "options": [
+            "Las características inherentes de las aplicaciones n-capas por la cual es muy sencillo añadir nuevas funcionalidades",
+            "La facilidad para añadir o suprimir estaciones para aumentar el rendimiento o capacidad",
+            "La facilidad para migrar a servidores mayores o menores",
+            "Las características inherentes de las aplicaciones cliente-servidor por la cual es muy sencillo añadir nuevas funcionalidades"
+        ],
+        "answer": 1
+    },
+    {
+        "category": "tendencias",
+        "text": "Qué puedes hacer con AWS Cloud:",
+        "options": [
+            "Reparador",
+            "Soporte para múltiples lenguajes de programación",
+            "Todas son correctas",
+            "Terminal desintegrada"
+        ],
+        "answer": 2
+    },
+    {
+        "category": "tendencias",
+        "text": "Personalización de las preferencias del usuario:",
+        "options": [
+            "Tareas",
+            "Esquemas de colores",
+            "Énfasis de temas",
+            "Ninguno"
+        ],
+        "answer": 3
+    },
+    {
+        "category": "tendencias",
+        "text": "Los servicios Web REST utilizan estándares muy conocidos como:",
+        "options": [
+            "WSDL",
+            "SOAP",
+            "Ninguno",
+            "REST"
+        ],
+        "answer": 3
+    },
+    {
+        "category": "tendencias",
+        "text": "AWS Cloud® es un entorno de:",
+        "options": [
+            "Desarrollo intelectual",
+            "Desarrollo desintegrado",
+            "Desarrollo individual",
+            "Ninguno"
+        ],
+        "answer": 3
+    },
+    {
+        "category": "tendencias",
+        "text": "El lenguaje que permite definir la interfaz, concretamente operaciones y tipos de datos de un servicio web es:",
+        "options": [
+            "Ninguno",
+            "UDDI",
+            "SAM v.1.",
+            "SOAP"
+        ],
+        "answer": 3
+    },
+    {
+        "category": "tendencias",
+        "text": "Los servicios Web presentan una arquitectura orientada a:",
+        "options": [
+            "Redes",
+            "Internet",
+            "Sistemas",
+            "Ninguno"
+        ],
+        "answer": 1
+    },
+    {
+        "category": "tendencias",
+        "text": "Los servicios Web REST utilizan estándares muy conocidos como:",
+        "options": [
+            "UDDI",
+            "XML",
+            "Ninguno",
+            "WML"
+        ],
+        "answer": 1
+    },
+    {
+        "category": "tendencias",
+        "text": "Un web servicio o servicio web es un software con un formato basado en texto que funciona con:",
+        "options": [
+            "Aplicaciones",
+            "IP",
+            "Sistema",
+            "Ninguno"
+        ],
+        "answer": 0
+    },
+    {
+        "category": "tendencias",
+        "text": "El lenguaje de descripción del Web Servicio es:",
+        "options": [
+            "Ninguno",
+            "WAP",
+            "WML",
+            "UDDI"
+        ],
+        "answer": 3
+    },
+    {
+        "category": "tendencias",
+        "text": "AWS Cloud® Transform com:",
+        "options": [
+            "Redes",
+            "Sistemas",
+            "Computadora",
+            "Ninguno"
+        ],
+        "answer": 3
+
+            },
+            // Continúa con las 45 preguntas restantes de tendencias...
+            // Preguntas 6-50 de tendencias aquí...
+
+            // ==============================================
+            // PROGRAMACIÓN ORIENTADA A OBJETOS (50 preguntas)
+            // ==============================================
+            {
+                   category: "poo",
+        text: "¿Cuál de los siguientes NO es un principio de la Programación Orientada a Objetos?",
+        options: ["Encapsulamiento", "Abstracción", "Reutilización de código", "Compilación rápida"],
+        answer: 3
+    },
+    {
+        category: "poo",
+        text: "¿Qué principio permite ocultar la implementación interna de un objeto?",
+        options: ["Polimorfismo", "Encapsulamiento", "Herencia", "Recursividad"],
+        answer: 1
+    },
+    {
+        category: "poo",
+        text: "¿Qué principio permite modelar una jerarquía de clases?",
+        options: ["Abstracción", "Modularidad", "Herencia", "Tipado fuerte"],
+        answer: 2
+    },
+    {
+        category: "poo",
+        text: "El polimorfismo permite:",
+        options: ["Ejecutar múltiples procesos simultáneamente", "Usar varias versiones de un mismo método", "Acceder a métodos privados", "Definir múltiples clases por archivo"],
+        answer: 1
+    },
+    {
+        category: "poo",
+        text: "¿Cuál es la ventaja principal del uso de clases?",
+        options: ["Permite el uso de comentarios", "Mejora la indentación del código", "Permite organizar y reutilizar código", "Aumenta el tamaño del ejecutable"],
+        answer: 2
+    },
+    {
+        category: "poo",
+        text: "¿Cómo se define una clase en Python?",
+        options: ["create class", "new class", "class Nombre:", "define class Nombre:"],
+        answer: 2
+    },
+    {
+        category: "poo",
+        text: "¿Cuál de los siguientes es el constructor en una clase de Python?",
+        options: ["__create__", "__start__", "__init__", "__class__"],
+        answer: 2
+    },
+    {
+        category: "poo",
+        text: "¿Qué representa self en una clase?",
+        options: ["El nombre de la clase", "El archivo de la clase", "El objeto actual", "El módulo principal"],
+        answer: 2
+    },
+    {
+        category: "poo",
+        text: "¿Cómo se crea un objeto de una clase Persona?",
+        options: ["Persona = new()", "persona = Persona()", "class Persona()", "persona = new Persona"],
+        answer: 1
+    },
+    {
+        category: "poo",
+        text: "¿Cuál es el propósito de los métodos de instancia?",
+        options: ["Compartir estado entre clases", "Manipular atributos de clase", "Operar sobre atributos del objeto", "Ser llamados sin objeto"],
+        answer: 2
+    },
+    {
+        category: "poo",
+        text: "¿Qué palabra clave se usa para heredar en Python?",
+        options: ["extends", "inherits", "super", "()"],
+        answer: 3
+    },
+    {
+        category: "poo",
+        text: "¿Cómo se accede a la clase base desde una clase derivada?",
+        options: ["base()", "super()", "parent()", "class.base()"],
+        answer: 1
+    },
+    {
+        category: "poo",
+        text: "¿Qué es una clase abstracta?",
+        options: ["Una clase sin métodos", "Una clase que no puede instanciarse directamente", "Una clase con múltiples padres", "Una clase de utilidad"],
+        answer: 1
+    },
+    {
+        category: "poo",
+        text: "¿Qué módulo permite declarar clases abstractas?",
+        options: ["abstract", "abc", "inherit", "interface"],
+        answer: 1
+    },
+    {
+        category: "poo",
+        text: "Una interfaz en Python se simula mediante:",
+        options: ["Herencia múltiple y clases abstractas", "Clases parciales", "Métodos recursivos", "Módulos integrados"],
+        answer: 0
+    },
+    {
+        category: "poo",
+        text: "¿Qué tipo de polimorfismo permite redefinir un método en una subclase?",
+        options: ["Polimorfismo paramétrico", "Polimorfismo de sobrecarga", "Polimorfismo de herencia", "Polimorfismo múltiple"],
+        answer: 2
+    },
+    {
+        category: "poo",
+        text: "¿Qué hace el decorador @staticmethod?",
+        options: ["Crea una constante", "Define un método que no accede a self", "Crea un método protegido", "Inicializa la clase"],
+        answer: 1
+    },
+    {
+        category: "poo",
+        text: "¿Qué decorador permite acceder al estado de clase?",
+        options: ["@staticmethod", "@classmethod", "@property", "@init"],
+        answer: 1
+    },
+    {
+        category: "poo",
+        text: "¿Cuál de los siguientes métodos accede a atributos de clase?",
+        options: ["Métodos de instancia", "Métodos de módulo", "Métodos estáticos", "Métodos de clase"],
+        answer: 3
+    },
+    {
+        category: "poo",
+        text: "¿Qué ocurre si redefinimos un método en una subclase?",
+        options: ["Se ejecuta el de la clase padre", "Se lanza error", "Se sobrescribe el método base", "Se ejecutan ambos"],
+        answer: 2
+    },
+    {
+        category: "poo",
+        text: "¿Cuál es la sintaxis básica para manejar excepciones?",
+        options: ["try-except", "catch-except", "attempt-fail", "error-handling"],
+        answer: 0
+    },
+    {
+        category: "poo",
+        text: "¿Qué instrucción se ejecuta al finalizar un bloque try?",
+        options: ["exit", "finally", "done", "complete"],
+        answer: 1
+    },
+    {
+        category: "poo",
+        text: "¿Cuál es el error común al usar recursividad?",
+        options: ["Stack overflow", "Memoria insuficiente", "División por cero", "Atributos no definidos"],
+        answer: 0
+    },
+    {
+        category: "poo",
+        text: "Una función recursiva debe tener:",
+        options: ["Llamadas ilimitadas", "Retornos dobles", "Condición base", "Decorador @recursive"],
+        answer: 2
+    },
+    {
+        category: "poo",
+        text: "¿Cuál de los siguientes errores se produce por índice fuera de rango?",
+        options: ["TypeError", "ValueError", "IndexError", "KeyError"],
+        answer: 2
+    },
+    {
+        category: "poo",
+        text: "¿Qué modo permite escritura y lectura en un archivo?",
+        options: ["'r'", "'w'", "'a'", "'w+'"],
+        answer: 3
+    },
+    {
+        category: "poo",
+        text: "¿Cómo se abre un archivo en Python?",
+        options: ["openfile()", "file.open()", "open()", "with file()"],
+        answer: 2
+    },
+    {
+        category: "poo",
+        text: "¿Qué método elimina un archivo?",
+        options: ["delete()", "os.remove()", "rm()", "file.delete()"],
+        answer: 1
+    },
+    {
+        category: "poo",
+        text: "¿Qué tipo de archivo usa pickle?",
+        options: ["Texto", "CSV", "Binario", "JSON"],
+        answer: 2
+    },
+    {
+        category: "poo",
+        text: "¿Qué biblioteca se usa comúnmente para conectar con SQLite?",
+        options: ["sqlalchemy", "sqlite3", "sqlpython", "mysql"],
+        answer: 1
+    },
+    {
+        category: "poo",
+        text: "¿Qué módulo permite crear hilos?",
+        options: ["multi", "parallel", "threading", "task"],
+        answer: 2
+    },
+    {
+        category: "poo",
+        text: "¿Qué es un hilo?",
+        options: ["Una clase auxiliar", "Un método", "Una unidad de ejecución", "Un archivo"],
+        answer: 2
+    },
+    {
+        category: "poo",
+        text: "¿Qué método inicia un hilo?",
+        options: ["run()", "start()", "begin()", "call()"],
+        answer: 1
+    },
+    {
+        category: "poo",
+        text: "¿Qué módulo se usa para GUI con ventanas?",
+        options: ["pygame", "tkinter", "flask", "numpy"],
+        answer: 1
+    },
+    {
+        category: "poo",
+        text: "En el patrón MVC, ¿qué componente gestiona los datos?",
+        options: ["Modelo", "Vista", "Controlador", "Layout"],
+        answer: 0
+    },
+    {
+        category: "poo",
+        text: "¿Qué función tiene la Vista en MVC?",
+        options: ["Calcular operaciones", "Controlar el flujo", "Mostrar la información", "Escribir en base de datos"],
+        answer: 2
+    },
+    {
+        category: "poo",
+        text: "¿Cuál es el propósito del Controlador en MVC?",
+        options: ["Crear hilos", "Mediar entre Modelo y Vista", "Formatear datos", "Dibujar gráficos"],
+        answer: 1
+    },
+    {
+        category: "poo",
+        text: "¿Cuál es el resultado de len(\"Python\")?",
+        options: ["5", "6", "7", "Error"],
+        answer: 1
+    },
+    {
+        category: "poo",
+        text: "¿Qué produce el código list(range(3))?",
+        options: ["[1, 2, 3]", "[0, 1, 2]", "[1, 2]", "range(3)"],
+        answer: 1
+    },
+    {
+        category: "poo",
+        text: "¿Cómo se convierte una cadena a entero?",
+        options: ["str()", "toInt()", "int()", "parse()"],
+        answer: 2
+    },
+    {
+        category: "poo",
+        text: "¿Qué imprime este código?\n\ndef f(x): return x * 2\nprint(f(3))",
+        options: ["3", "5", "6", "Error"],
+        answer: 2
+    },
+    {
+        category: "poo",
+        text: "¿Qué hace el operador is?",
+        options: ["Compara valores", "Compara referencias", "Asigna valores", "Especifica tipos"],
+        answer: 1
+    },
+    {
+        category: "poo",
+        text: "¿Cuál es el resultado de bool(\"\")?",
+        options: ["True", "False", "\"\"", "Error"],
+        answer: 1
+    },
+    {
+        category: "poo",
+        text: "¿Qué estructura usa for x in lista:?",
+        options: ["Iteración", "Recursividad", "Herencia", "Asignación"],
+        answer: 0
+    },
+    {
+        category: "poo",
+        text: "¿Qué ocurre si se accede a una clave inexistente en un diccionario?",
+        options: ["Devuelve None", "Lanza KeyError", "Devuelve cero", "Se detiene el programa"],
+        answer: 1
+    },
+    {
+        category: "poo",
+        text: "¿Cuál es el resultado de 3 // 2?",
+        options: ["1.5", "2", "1", "0"],
+        answer: 2
+    },
+    {
+        category: "poo",
+        text: "¿Qué hace el operador *args?",
+        options: ["Agrupa argumentos como lista", "Agrupa argumentos en tupla", "Agrupa como diccionario", "Define constantes"],
+        answer: 1
+    },
+    {
+        category: "poo",
+        text: "¿Qué hace **kwargs?",
+        options: ["Ignora argumentos", "Captura argumentos nombrados", "Genera errores", "Crea clases"],
+        answer: 1
+    },
+    {
+        category: "poo",
+        text: "¿Qué módulo permite trabajar con tiempo?",
+        options: ["os", "math", "time", "date"],
+        answer: 2
+    },
+    {
+        category: "poo",
+        text: "¿Cómo se crea una lista por comprensión?",
+        options: ["list(1 to 5)", "[i for i in range(5)]", "for i in list", "(i; i<5; i++)"],
+        answer: 1
+            },
+            // Continúa con las 45 preguntas restantes de POO...
+            // Preguntas 6-50 de POO aquí...
+
+            // ==============================================
+            // EMPRENDIMIENTO (25 preguntas)
+            // ==============================================
+            {
+                 category: "emprendimiento",
+        text: "¿Cuál de las siguientes opciones describe correctamente una barrera emocional que limita la creatividad?",
+        options: [
+            "Usar un objeto únicamente para su propósito tradicional",
+            "No considerar más de una solución a un problema",
+            "Miedo al fracaso o al ridículo al proponer ideas nuevas",
+            "Enfocarse únicamente en los aspectos visibles de un problema"
+        ],
+        answer: 2
+    },
+    {
+        category: "emprendimiento",
+        text: "¿Cuál de las siguientes afirmaciones corresponde a una característica del pensamiento lateral?",
+        options: [
+            "Busca una única solución correcta a cada problema",
+            "Se apoya en el humor, la provocación y el azar para generar ideas",
+            "Es poco útil para resolver problemas complejos o bloqueados",
+            "Se basa en procedimientos lineales y estrictamente lógicos"
+        ],
+        answer: 1
+    },
+    {
+        category: "emprendimiento",
+        text: "¿Cuál de las siguientes opciones describe mejor el pensamiento vertical?",
+        options: [
+            "Sigue una secuencia lógica y busca una única solución correcta",
+            "Utiliza el azar y la provocación para estimular ideas nuevas",
+            "Rechaza el uso de la experiencia previa y el análisis lógico",
+            "Se enfoca en generar múltiples respuestas creativas y no convencionales"
+        ],
+        answer: 0
+    },
+    {
+        category: "emprendimiento",
+        text: "¿Cuál de las siguientes afirmaciones refleja una característica personal del emprendedor?",
+        options: [
+            "El emprendedor depende de otros para superar obstáculos difíciles",
+            "El emprendedor actúa con iniciativa y asume la responsabilidad de sus decisiones",
+            "El emprendedor evita asumir riesgos para proteger sus intereses",
+            "El emprendedor delega sus metas para centrarse en nuevas oportunidades"
+        ],
+        answer: 1
+    },
+    {
+        category: "emprendimiento",
+        text: "Característica personal del emprendedor: confianza en sí mismo:",
+        options: [
+            "Mantiene el esfuerzo constante hacia sus objetivos, incluso frente a obstáculos y fracasos",
+            "Habilidad de generar ideas innovadoras y encontrar soluciones originales a problemas existentes",
+            "El emprendedor cree en sus capacidades y decisiones, lo que le permite enfrentar desafíos con determinación",
+            "Dispuesto a asumir riesgos calculados, comprendiendo que el fracaso es parte del proceso de aprendizaje"
+        ],
+        answer: 2
+    },
+    {
+        category: "emprendimiento",
+        text: "Seleccione las características de la creatividad",
+        options: [
+            "Empatía",
+            "Imaginación",
+            "Originalidad",
+            "Verdad"
+        ],
+        answer: [1, 2]
+    },
+    {
+        category: "emprendimiento",
+        text: "¿Cuál de las siguientes afirmaciones describe mejor el concepto de creatividad?",
+        options: [
+            "Es la capacidad de imaginar mundos ficticios sin necesidad de aplicarlos a la realidad",
+            "Es el proceso de copiar ideas valiosas ya existentes sin necesidad de modificación",
+            "Es la capacidad de generar o combinar ideas, conceptos o cosas de forma novedosa y apropiada para un contexto específico",
+            "Es la habilidad de recordar ideas antiguas y aplicarlas de la misma forma"
+        ],
+        answer: 2
+    },
+    {
+        category: "emprendimiento",
+        text: "¿Cuáles son los elementos fundamentales de la creatividad?",
+        options: [
+            "Disciplina, control y obediencia",
+            "Razonamiento, experiencia y técnica",
+            "Fluidez, flexibilidad y originalidad",
+            "Memoria, análisis y lógica"
+        ],
+        answer: 2
+    },
+    {
+        category: "emprendimiento",
+        text: "Características del modelo de negocio tradicional:",
+        options: [
+            "Busca inversión externa",
+            "Enfocado en escalabilidad rápida",
+            "Innovación tecnológica",
+            "Requiere inversión inicial considerable"
+        ],
+        answer: 3
+    },
+    {
+        category: "emprendimiento",
+        text: "¿Cuál de las siguientes opciones NO forma parte de la técnica SCAMPER?",
+        options: [
+            "Sustituir (Substitute)",
+            "Adaptar (Adapt)",
+            "Analizar (Analyze)",
+            "Combinar (Combine)"
+        ],
+        answer: 2
+    },
+    {
+        category: "emprendimiento",
+        text: "¿Qué es el Brainstorming?",
+        options: [
+            "Un sistema de evaluación para medir conocimientos técnicos específicos",
+            "Un proceso de análisis crítico donde solo se identifican errores y problemas",
+            "Un método para generar muchas ideas creativas en grupo, sin juzgarlas inicialmente",
+            "Una técnica para evaluar el rendimiento individual en silencio"
+        ],
+        answer: 2
+    },
+    {
+        category: "emprendimiento",
+        text: "¿Cuál de las siguientes es una característica principal de la técnica de Los seis sombreros para pensar?",
+        options: [
+            "Mezclar emociones y hechos para lograr un pensamiento más espontáneo",
+            "Fomentar el pensamiento caótico para estimular la creatividad",
+            "Promover la colaboración y el trabajo en equipo sin conflictos",
+            "Utilizar todos los sombreros al mismo tiempo para un análisis completo"
+        ],
+        answer: 2
+    },
+    {
+        category: "emprendimiento",
+        text: "¿Cuál es la definición más adecuada de innovación?",
+        options: [
+            "La introducción de un producto, proceso, método de comercialización u organizativo nuevo o significativamente mejorado",
+            "La eliminación de productos o servicios antiguos sin implementar cambios nuevos",
+            "La repetición constante de métodos tradicionales en una empresa",
+            "La contratación masiva de personal sin cambios en la organización"
+        ],
+        answer: 0
+    },
+    {
+        category: "emprendimiento",
+        text: "¿Cuál de las siguientes es una fuente común de innovación para la generación de emprendimiento?",
+        options: [
+            "Copiar exactamente a la competencia sin aportar mejoras",
+            "Repetición de procesos antiguos sin cambios",
+            "Evitar el uso de tecnología en productos o servicios",
+            "Observación de necesidades no satisfechas en el mercado"
+        ],
+        answer: 3
+    },
+    {
+        category: "emprendimiento",
+        text: "¿Cuál es el objetivo principal de la técnica de los seis sombreros para pensar desarrollada por Edward de Bono?",
+        options: [
+            "Sustituir por completo el trabajo en equipo por el pensamiento individual",
+            "Enseñar a los estudiantes a memorizar información de forma más eficiente",
+            "Fomentar la exploración estructurada de diferentes perspectivas para mejorar la toma de decisiones, la resolución de problemas y la creatividad",
+            "Desarrollar habilidades exclusivamente lógicas y matemáticas"
+        ],
+        answer: 2
+    },
+    {
+        category: "emprendimiento",
+        text: "¿Qué sombrero en la técnica de Los seis sombreros para pensar se utiliza para expresar sentimientos sin necesidad de justificación?",
+        options: [
+            "Sombrero azul",
+            "Sombrero blanco",
+            "Sombrero negro",
+            "Sombrero rojo"
+        ],
+        answer: 3
+    },
+    {
+        category: "emprendimiento",
+        text: "¿Cuál de las siguientes situaciones representa una innovación de proceso?",
+        options: [
+            "Una compañía incorpora un nuevo software que permite automatizar tareas y reducir tiempos de producción",
+            "Una organización implementa horarios flexibles para mejorar el bienestar laboral",
+            "Una empresa cambia el diseño de su producto para hacerlo más atractivo al consumidor",
+            "Una marca lanza un nuevo producto hecho con materiales reciclables"
+        ],
+        answer: 0
+    },
+    {
+        category: "emprendimiento",
+        text: "¿Qué tipo de innovación se caracteriza por generar una ruptura con lo establecido y ofrecer una propuesta de valor completamente nueva?",
+        options: [
+            "Innovación incremental",
+            "Innovación organizacional",
+            "Innovación disruptiva",
+            "Innovación radical"
+        ],
+        answer: 2
+    },
+    {
+        category: "emprendimiento",
+        text: "¿Qué tipo de innovación representa la acción de un padre y su hijo conectando placas solares para generar energía limpia en su hogar?",
+        options: [
+            "Innovación tecnológica",
+            "Innovación en materiales y sistemas constructivos",
+            "Innovación sostenible",
+            "Innovación social"
+        ],
+        answer: 2
+    },
+    {
+        category: "emprendimiento",
+        text: "¿Cuál de las siguientes afirmaciones describe correctamente la innovación según su empuje tecnológico?",
+        options: [
+            "Se refiere a innovaciones que provienen de nuevas tecnologías, a partir de las cuales se exploran y aplican nuevas posibilidades",
+            "Es una estrategia que combina recursos internos y externos sin aplicar tecnología",
+            "Se basa únicamente en los procesos tradicionales de producción, sin introducir novedades tecnológicas",
+            "Es un tipo de innovación que surge exclusivamente de la cooperación entre empresas y agentes externos"
+        ],
+        answer: 0
+    },
+    {
+        category: "emprendimiento",
+        text: "¿Quién fue el creador de Tetris y en qué año se desarrolló el juego?",
+        options: [
+            "Shigeru Miyamoto, 1985",
+            "Alexey Pajitnov, 1984",
+            "Hideo Kojima, 1986",
+            "Sid Meier, 1983"
+        ],
+        answer: 1
+    },
+    {
+        category: "emprendimiento",
+        text: "¿Qué es la fluidez en el contexto de la creatividad?",
+        options: [
+            "Capacidad para resolver problemas complejos",
+            "Capacidad para generar múltiples ideas en un corto período de tiempo",
+            "Capacidad para encontrar una solución rápida",
+            "Capacidad para generar una sola idea"
+        ],
+        answer: 1
+    },
+    {
+        category: "emprendimiento",
+        text: "¿Qué aspecto del diseño de Tetris contribuye a su capacidad para estimular la creatividad?",
+        options: [
+            "Narrativa compleja",
+            "Uso de tetrominós y resolución de problemas espaciales",
+            "Gráficos en 3D",
+            "Personajes personalizables"
+        ],
+        answer: 1
+    },
+    {
+        category: "emprendimiento",
+        text: "¿Cuál de las siguientes habilidades cognitivas se ve reforzada al jugar Tetris?",
+        options: [
+            "Reconocimiento de patrones",
+            "Pensamiento lógico y espacial",
+            "Memoria a largo plazo",
+            "Habilidad lingüística"
+        ],
+        answer: 1
+    },
+    {
+        category: "emprendimiento",
+        text: "¿Qué fenómeno psicológico describe la experiencia de visualizar formas de Tetris incluso fuera del juego?",
+        options: [
+            "Efecto Tetris",
+            "Síndrome de Stendhal",
+            "Efecto Mandela",
+            "Paradoja de elección"
+        ],
+        answer: 0
+            },
+            // Continúa con las 45 preguntas restantes de diseño...
+            // Preguntas 6-50 de diseño aquí...
+            {
+        "category": "diseño",
+        "text": "Es el medio con que el usuario puede comunicarse con un equipo o una aplicación y comprende todas las partes de contacto entre el usuario y el sistema.",
+        "options": [
+            "Interfaz de usuario",
+            "Hardware",
+            "Software",
+            "Ninguna de las anteriores"
+        ],
+        "answer": 0
+    },
+    {
+        "category": "diseño",
+        "text": "Una interfaz es un conjunto de elementos cuya funcionalidad es determinar el comportamiento de un sistema, es decir, como un molde o una plantilla.",
+        "options": [
+            "Verdadero",
+            "Falso"
+        ],
+        "answer": 0
+    },
+    {
+        "category": "diseño",
+        "text": "A la hora de construir una interfaz de usuario, o un prototipo de ésta suelen utilizarse lenguajes de muy alto nivel, que permiten definir fácilmente la interfaz de usuario. Estos lenguajes y las herramientas que los soportan permiten crear la interfaz sin necesidad de programar, sino simplemente arrastrando, soltando y distribuyendo por la pantalla los elementos del modo que se desee.",
+        "options": [
+            "Verdadero",
+            "Falso"
+        ],
+        "answer": 0
+    },
+    {
+        "category": "diseño",
+        "text": "La variabilidad se refiere a la fluctuación del tiempo de espera promedio, una variabilidad baja permite al usuario mantener un ritmo de trabajo constante. Es conveniente incluso aumentar el tiempo de respuesta si se consigue con eso disminuir su variabilidad.",
+        "options": [
+            "Verdadero",
+            "Falso"
+        ],
+        "answer": 0
+    },
+    {
+        "category": "diseño",
+        "text": "Diseño centrado en el usuario o cliente. Implica comprender a la gente, sus tareas, la tecnología disponible y cómo todo eso se relaciona con el entorno social u organizacional del cliente y, potencialmente, también de nuestro cliente.",
+        "options": [
+            "Verdadero",
+            "Falso"
+        ],
+        "answer": 0
+    },
+    {
+        "category": "diseño",
+        "text": "Distintos modos de operación del procesador, que determinan qué instrucciones se pueden ejecutar en cada momento. Los programas de usuario se ejecutan en modo normal, mientras que el código del sistema lo hace en modo privilegiado.",
+        "options": [
+            "Verdadero",
+            "Falso"
+        ],
+        "answer": 0
+    },
+    {
+        "category": "diseño",
+        "text": "La información debe estar organizada de manera jerárquica. Es decir, la información acerca de una tarea, objeto o sistema debe presentarse primero en un nivel de abstracción elevado.",
+        "options": [
+            "Verdadero",
+            "Falso"
+        ],
+        "answer": 0
+    },
+    {
+        "category": "diseño",
+        "text": "Durante el diseño centrado en el usuario los diseñadores emplean una variedad de métodos y técnicas de investigación, como las encuestas o entrevistas.",
+        "options": [
+            "Verdadero",
+            "Falso"
+        ],
+        "answer": 0
+    },
+    {
+        "category": "diseño",
+        "text": "Para que un sistema interactivo cumpla sus objetivos tiene que ser usable y accesible a la mayor parte de la población humana.",
+        "options": [
+            "Verdadero",
+            "Falso"
+        ],
+        "answer": 0
+    },
+    {
+        "category": "diseño",
+        "text": "La 'facilidad de uso' es una de las facetas fundamentales que forma parte de la UX. Pero no lo es todo, debemos cuidar todos los aspectos de nuestro sitio web.",
+        "options": [
+            "Verdadero",
+            "Falso"
+        ],
+        "answer": 0
+    },
+    {
+        "category": "diseño",
+        "text": "Usabilidad en la eficiencia y satisfacción con la que un producto permite alcanzar objetivos específicos a usuarios específicos en un contexto de uso específico.",
+        "options": [
+            "Verdadero",
+            "Falso"
+        ],
+        "answer": 0
+    },
+    {
+        "category": "diseño",
+        "text": "Interfaz gráfica de usuario vs Interfaz de lenguaje natural",
+        "options": [
+            "GUI vs NLUI",
+            "CLI vs GUI",
+            "TUI vs GUI",
+            "Ninguna de las anteriores"
+        ],
+        "answer": 0
+    },
+    {
+        "category": "diseño",
+        "text": "Métodos declarados de una interfaz vs Las interfaces sólo pueden tener interfaces de",
+        "options": [
+            "Comportamiento vs Implementación",
+            "Funciones vs Métodos",
+            "Atributos vs Comportamiento",
+            "Ninguna de las anteriores"
+        ],
+        "answer": 0
+    },
+    {
+        "category": "diseño",
+        "text": "Avistais vs Construcción",
+        "options": [
+            "Evaluación vs Implementación",
+            "Diseño vs Desarrollo",
+            "Prototipado vs Producción",
+            "Ninguna de las anteriores"
+        ],
+        "answer": 0
+    },
+    {
+        "category": "diseño",
+        "text": "Diseño centrado en la tecnología vs Diseño centrado en la compañía",
+        "options": [
+            "Tecnología vs Negocio",
+            "Usuario vs Empresa",
+            "Sistema vs Organización",
+            "Ninguna de las anteriores"
+        ],
+        "answer": 0
+    },
+    {
+        "category": "diseño",
+        "text": "Diseño de soluciones vs Especificar requerimientos del usuario",
+        "options": [
+            "Implementación vs Análisis",
+            "Prototipado vs Investigación",
+            "Desarrollo vs Requisitos",
+            "Ninguna de las anteriores"
+        ],
+        "answer": 0
+    },
+    {
+        "category": "diseño",
+        "text": "Robustez vs Consistencia",
+        "options": [
+            "Fiabilidad vs Uniformidad",
+            "Estabilidad vs Coherencia",
+            "Resistencia vs Regularidad",
+            "Ninguna de las anteriores"
+        ],
+        "answer": 0
+    },
+    {
+        "category": "diseño",
+        "text": "Formato de pantalla vs Análisis y modelado de las tareas",
+        "options": [
+            "Presentación vs Funcionalidad",
+            "Diseño vs Requisitos",
+            "Interfaz vs Usabilidad",
+            "Ninguna de las anteriores"
+        ],
+        "answer": 0
+    },
+    {
+        "category": "diseño",
+        "text": "Programa vs Intérprete de órdenes",
+        "options": [
+            "Aplicación vs CLI",
+            "Software vs Shell",
+            "Sistema vs Terminal",
+            "Ninguna de las anteriores"
+        ],
+        "answer": 0
+    },
+    {
+        "category": "diseño",
+        "text": "Interfaz de menú",
+        "options": [
+            "De barra",
+            "En cascada",
+            "Contextual o popup",
+            "Todas las anteriores"
+        ],
+        "answer": 3
+    },
+    {
+        "category": "diseño",
+        "text": "Características de una interfaz",
+        "options": [
+            "Construcción",
+            "Declarar",
+            "Ninguna de las anteriores",
+            "Facilidad de comprensión, aprendizaje y uso"
+        ],
+        "answer": 3
+    },
+    {
+        "category": "diseño",
+        "text": "En cuantas partes está desglosado el proceso de diseño de interfaz.",
+        "options": [
+            "8",
+            "5",
+            "3",
+            "4"
+        ],
+        "answer": 3
+    },
+    {
+        "category": "diseño",
+        "text": "El tiempo de respuesta, los servicios de ayuda, la información de error y el etiquetado de órdenes:",
+        "options": [
+            "Información de errores",
+            "Servicios de ayuda al usuario",
+            "Todas las anteriores",
+            "Tiempo de respuesta"
+        ],
+        "answer": 2
+    },
+    {
+        "category": "diseño",
+        "text": "El diseño centrado en el usuario hace énfasis en:",
+        "options": [
+            "Contexto",
+            "Usabilidad",
+            "Todas las anteriores",
+            "Comprensión"
+        ],
+        "answer": 2
+    },
+    {
+        "category": "diseño",
+        "text": "Tipos de usuarios",
+        "options": [
+            "Usuario sistemático",
+            "Usuario de órdenes",
+            "Usuario diseñador",
+            "Ninguna de las anteriores"
+        ],
+        "answer": 1
+    },
+    {
+        "category": "diseño",
+        "text": "Principios que existen en la reducción de memoria",
+        "options": [
+            "5",
+            "3",
+            "4",
+            "8"
+        ],
+        "answer": 2
+    },
+    {
+        "category": "diseño",
+        "text": "Seleccione los principios para la reducción de memoria",
+        "options": [
+            "Aliviar la memoria a corto plazo",
+            "Reducir la carga",
+            "Ninguna de las anteriores",
+            "Promover la claridad visual"
+        ],
+        "answer": 0
+    },
+    {
+        "category": "diseño",
+        "text": "Para reducir la demanda de memoria a corto plazo se debe:",
+        "options": [
+            "La interfaz debe organizarse de forma jerárquica.",
+            "Debe ser utilizada para el usuario.",
+            "Ninguna de las anteriores.",
+            "Exigir una memoria a corto plazo puede ser significativo."
+        ],
+        "answer": 0
+    },
+    {
+        "category": "diseño",
+        "text": "Que parámetros mide la flexibilidad:",
+        "options": [
+            "7",
+            "4",
+            "9",
+            "2"
+        ],
+        "answer": 1
+    },
+    {
+        "category": "diseño",
+        "text": "La clave de un sitio usable es:",
+        "options": [
+            "Realizar con satisfacción aquello que pretendía realizar",
+            "Productividad del sitio",
+            "Entender su estructura",
+            "Confidencialidad"
+        ],
+        "answer": 0
+    },
+    {
+        "category": "diseño",
+        "text": "Reglas para el diseño de interfaz de usuario",
+        "options": [
+            "Software",
+            "Ninguna de las anteriores",
+            "Dar control a los usuarios",
+            "Hardware"
+        ],
+        "answer": 2
+    },
+    {
+        "category": "diseño",
+        "text": "Características de una interfaz",
+        "options": [
+            "Incremento",
+            "Las operaciones serán rápidas y reversibles",
+            "Argumentativos",
+            "Tips de retorno"
+        ],
+        "answer": 1
+    },
+    {
+        "category": "diseño",
+        "text": "Proceso de análisis",
+        "options": [
+            "Requerimientos de la interfaz",
+            "Obtener datos",
+            "Describir las tareas futuras",
+            "Forma de trabajo actual"
+        ],
+        "answer": 0
+    },
+    {
+        "category": "diseño",
+        "text": "Que debería considerar el usuario final:",
+        "options": [
+            "Uso",
+            "Atención",
+            "Técnicas",
+            "Contexto"
+        ],
+        "answer": 3
+    },
+    {
+        "category": "diseño",
+        "text": "Ciclo de diseño iterativo",
+        "options": [
+            "Evaluación",
+            "Diseño",
+            "Todas las anteriores",
+            "Prototipado"
+        ],
+        "answer": 2
+    },
+    {
+        "category": "diseño",
+        "text": "Temas centrales del diseño centrado en el usuario",
+        "options": [
+            "Todas las anteriores",
+            "Contexto",
+            "Contexto",
+            "Rendimiento"
+        ],
+        "answer": 0
+    },
+    {
+        "category": "diseño",
+        "text": "Seleccione los principios de usabilidad:",
+        "options": [
+            "Recuperación de errores",
+            "Confianza",
+            "Flexibilidad",
+            "Productividad"
+        ],
+        "answer": 2
+    },
+    {
+        "category": "diseño",
+        "text": "Cuáles son las principales fases en el proceso de diseño de una interfaz:",
+        "options": [
+            "Análisis",
+            "Ninguna de la anteriores",
+            "Diseño",
+            "Construcción"
+        ],
+        "answer": 0
+    },
+    {
+        "category": "diseño",
+        "text": "Una interfaz de hardware es a nivel de los dispositivos",
+        "options": [
+            "Verdadero",
+            "Falso"
+        ],
+        "answer": 0
+    },
+    {
+        "category": "diseño",
+        "text": "Una interfaz es un método declarado",
+        "options": [
+            "Verdadero",
+            "Falso"
+        ],
+        "answer": 1
+    },
+    {
+        "category": "diseño",
+        "text": "El objetivo del proceso de diseño de la interfaz es definir un conjunto de objetos y acciones sobre estos objetos que posibiliten al usuario llevar a cabo todas las tareas.",
+        "options": [
+            "Verdadero",
+            "Falso"
+        ],
+        "answer": 0
+    },
+    {
+        "category": "diseño",
+        "text": "A medida que la interfaz de usuario se va desarrollando pueden surgir casi siempre cuatro tipos de problemas comunes a casi todos los diseños de interfaces.",
+        "options": [
+            "Verdadero",
+            "Falso"
+        ],
+        "answer": 0
+    },
+    {
+        "category": "diseño",
+        "text": "El diseño centrado en el usuario es una filosofía que pierde crear experiencias en un ambiente emocional.",
+        "options": [
+            "Verdadero",
+            "Falso"
+        ],
+        "answer": 1
+    },
+    {
+        "category": "diseño",
+        "text": "El diseño centrado en el usuario se centra en el problema de obtener privado y mantenerlo. Trata que el primer uso sea disfrutable y procura que los visitantes se transformen en clientes.",
+        "options": [
+            "Verdadero",
+            "Falso"
+        ],
+        "answer": 1
+    },
+    {
+        "category": "diseño",
+        "text": "La reducción de la carga de la memoria facilitará el aprendizaje. Permitirá al usuario recordar, más que aprender, el funcionamiento de la interfaz.",
+        "options": [
+            "Verdadero",
+            "Falso"
+        ],
+        "answer": 0
+    },
+    {
+        "category": "diseño",
+        "text": "En la reducción de memoria se debe establecer valores por defectos útiles",
+        "options": [
+            "Verdadero",
+            "Falso"
+        ],
+        "answer": 0
+    },
+    {
+        "category": "diseño",
+        "text": "En la construcción una interfaz consistente la información estará organizada en base a un criterio estándar en toda la aplicación.",
+        "options": [
+            "Verdadero",
+            "Falso"
+        ],
+        "answer": 0
+    },
+    {
+        "category": "diseño",
+        "text": "La usabilidad es la medida en la que un producto se puede usar por determinados usuarios para conseguir unos objetivos específicos.",
+        "options": [
+            "Verdadero",
+            "Falso"
+        ],
+        "answer": 0
+    },
+    {
+        "category": "diseño",
+        "text": "La usabilidad o 'facilidad de uso' es una de las facetas fundamentales que forma parte de la UX",
+        "options": [
+            "Verdadero",
+            "Falso"
+        ],
+        "answer": 0
+    }
+        ];
+
+        // Variables del simulador
+        let currentQuestion = 0;
+        let userAnswers = Array(questions.length).fill(null);
+        let markedQuestions = Array(questions.length).fill(false);
+        let score = 0;
+        let timeLeft = 120 * 60; // 120 minutos en segundos
+        let timerInterval;
+        let filteredQuestions = [...questions];
+        let showOnlyUnanswered = true;
+        let randomOrder = false;
+
+        // Elementos del DOM
+        const questionsContainer = document.getElementById('questions-container');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const markBtn = document.getElementById('mark-btn');
+        const currentQuestionSpan = document.getElementById('current-question');
+        const totalQuestionsSpan = document.getElementById('total-questions');
+        const totalQuestionsAllSpan = document.getElementById('total-questions-all');
+        const answeredCounterSpan = document.getElementById('answered-counter');
+        const resultDiv = document.getElementById('result');
+        const timeSpan = document.getElementById('time');
+        const categorySelect = document.getElementById('category');
+        const showAnsweredCheckbox = document.getElementById('show-answered');
+        const randomOrderCheckbox = document.getElementById('random-order');
+
+        // Inicializar el simulador
+        function init() {
+            totalQuestionsAllSpan.textContent = questions.length;
+            renderQuestions();
+            showQuestion(currentQuestion);
+            startTimer();
+            updateAnsweredCounter();
+            
+            // Event listeners
+            prevBtn.addEventListener('click', () => navigate(-1));
+            nextBtn.addEventListener('click', () => navigate(1));
+            submitBtn.addEventListener('click', calculateScore);
+            markBtn.addEventListener('click', toggleMarkQuestion);
+            categorySelect.addEventListener('change', filterQuestions);
+            showAnsweredCheckbox.addEventListener('change', toggleShowAnswered);
+            randomOrderCheckbox.addEventListener('change', toggleRandomOrder);
+        }
+
+        // Filtrar preguntas por categoría
+        function filterQuestions() {
+            const category = categorySelect.value;
+            if (category === 'all') {
+                filteredQuestions = [...questions];
+            } else {
+                filteredQuestions = questions.filter(q => q.category === category);
+            }
+            
+            if (randomOrder) {
+                shuffleArray(filteredQuestions);
+            }
+            
+            currentQuestion = 0;
+            userAnswers = Array(filteredQuestions.length).fill(null);
+            markedQuestions = Array(filteredQuestions.length).fill(false);
+            renderQuestions();
+            showQuestion(currentQuestion);
+            totalQuestionsSpan.textContent = filteredQuestions.length;
+            updateAnsweredCounter();
+        }
+
+        // Alternar entre mostrar solo preguntas sin responder
+        function toggleShowAnswered() {
+            showOnlyUnanswered = showAnsweredCheckbox.checked;
+            currentQuestion = 0;
+            renderQuestions();
+            showQuestion(currentQuestion);
+            updateAnsweredCounter();
+        }
+
+        // Alternar orden aleatorio
+        function toggleRandomOrder() {
+            randomOrder = randomOrderCheckbox.checked;
+            if (randomOrder) {
+                shuffleArray(filteredQuestions);
+            } else {
+                // Restaurar orden original
+                const category = categorySelect.value;
+                if (category === 'all') {
+                    filteredQuestions = [...questions];
+                } else {
+                    filteredQuestions = questions.filter(q => q.category === category);
+                }
+            }
+            currentQuestion = 0;
+            renderQuestions();
+            showQuestion(currentQuestion);
+        }
+
+        // Barajar array
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // Marcar/desmarcar pregunta para revisión
+        function toggleMarkQuestion() {
+            markedQuestions[currentQuestion] = !markedQuestions[currentQuestion];
+            const questionDiv = document.querySelector(`.question[data-index="${currentQuestion}"]`);
+            if (markedQuestions[currentQuestion]) {
+                questionDiv.style.backgroundColor = '#fff3cd';
+                markBtn.textContent = 'Desmarcar revisión';
+            } else {
+                questionDiv.style.backgroundColor = '';
+                markBtn.textContent = 'Marcar para revisar';
+            }
+        }
+
+        // Actualizar contador de preguntas respondidas
+        function updateAnsweredCounter() {
+            const answered = userAnswers.filter(answer => answer !== null).length;
+            answeredCounterSpan.textContent = `${answered} respondidas de ${filteredQuestions.length}`;
+        }
+
+        // Renderizar todas las preguntas
+        function renderQuestions() {
+            questionsContainer.innerHTML = '';
+            filteredQuestions.forEach((question, index) => {
+                if (showOnlyUnanswered && userAnswers[index] !== null) {
+                    return; // Saltar preguntas ya respondidas
+                }
+                
+                const questionDiv = document.createElement('div');
+                questionDiv.className = `question ${index === 0 ? 'active' : ''}`;
+                questionDiv.dataset.index = index;
+                
+                if (markedQuestions[index]) {
+                    questionDiv.style.backgroundColor = '#fff3cd';
+                }
+                
+                const questionText = document.createElement('div');
+                questionText.className = 'question-text';
+                questionText.textContent = `${index + 1}. ${question.text}`;
+                questionDiv.appendChild(questionText);
+                
+                const optionsDiv = document.createElement('div');
+                optionsDiv.className = 'options';
+                
+                question.options.forEach((option, optionIndex) => {
+                    const optionDiv = document.createElement('div');
+                    optionDiv.className = 'option';
+                    
+                    const input = document.createElement('input');
+                    input.type = question.options.length <= 2 ? 'radio' : 'radio'; // Usar radio para todas por simplicidad
+                    input.name = `question-${index}`;
+                    input.id = `question-${index}-option-${optionIndex}`;
+                    input.value = optionIndex;
+                    input.addEventListener('change', () => {
+                        userAnswers[index] = optionIndex;
+                        updateAnsweredCounter();
+                    });
+                    
+                    if (userAnswers[index] === optionIndex) {
+                        input.checked = true;
+                    }
+                    
+                    const label = document.createElement('label');
+                    label.htmlFor = `question-${index}-option-${optionIndex}`;
+                    label.textContent = option;
+                    
+                    optionDiv.appendChild(input);
+                    optionDiv.appendChild(label);
+                    optionsDiv.appendChild(optionDiv);
+                });
+                
+                questionDiv.appendChild(optionsDiv);
+                questionsContainer.appendChild(questionDiv);
+            });
+        }
+
+        // Mostrar una pregunta específica
+        function showQuestion(index) {
+            const questions = document.querySelectorAll('.question');
+            if (questions.length === 0) {
+                // No hay preguntas para mostrar (todas respondidas en modo "mostrar solo sin responder")
+                questionsContainer.innerHTML = '<div class="no-questions">¡Has respondido todas las preguntas de esta categoría!</div>';
+                prevBtn.style.display = 'none';
+                nextBtn.style.display = 'none';
+                submitBtn.style.display = 'block';
+                return;
+            }
+            
+            questions.forEach(q => q.classList.remove('active'));
+            questions[index].classList.add('active');
+            currentQuestionSpan.textContent = index + 1;
+            
+            // Habilitar/deshabilitar botones de navegación
+            prevBtn.disabled = index === 0;
+            nextBtn.disabled = index === questions.length - 1;
+            
+            // Mostrar/ocultar botón de enviar
+            submitBtn.style.display = index === questions.length - 1 ? 'block' : 'none';
+            
+            // Actualizar estado del botón de marcar
+            markBtn.textContent = markedQuestions[index] ? 'Desmarcar revisión' : 'Marcar para revisar';
+        }
+
+        // Navegar entre preguntas
+        function navigate(direction) {
+            const questions = document.querySelectorAll('.question');
+            let newIndex = currentQuestion + direction;
+            
+            // Asegurarse de que el índice esté dentro de los límites
+            if (newIndex < 0) newIndex = 0;
+            if (newIndex >= questions.length) newIndex = questions.length - 1;
+            
+            currentQuestion = newIndex;
+            showQuestion(currentQuestion);
+        }
+
+        // Iniciar temporizador
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                timeSpan.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    calculateScore();
+                }
+            }, 1000);
+        }
+
+        // Calcular puntaje
+        function calculateScore() {
+    clearInterval(timerInterval);
+
+    score = 0;
+    let correctList = '';
+    let incorrectList = '';
+
+    filteredQuestions.forEach((question, index) => {
+        const userAnswerIndex = userAnswers[index];
+        const correctAnswerIndex = question.answer;
+        const userAnswerText = userAnswerIndex !== null ? question.options[userAnswerIndex] : 'No respondida';
+        const correctAnswerText = question.options[correctAnswerIndex];
+
+        const questionHTML = `
+            <div style="margin-bottom: 15px;">
+                <strong>${index + 1}. ${question.text}</strong><br>
+                <span style="color:${userAnswerIndex === correctAnswerIndex ? 'green' : 'red'};">
+                    Tu respuesta: ${userAnswerText}
+                </span><br>
+                <span>Respuesta correcta: ${correctAnswerText}</span>
+            </div>
+        `;
+
+        if (userAnswerIndex === correctAnswerIndex) {
+            score++;
+            correctList += questionHTML;
+        } else {
+            incorrectList += questionHTML;
+        }
+    });
+
+    const percentage = Math.round((score / filteredQuestions.length) * 100);
+    let message = '';
+
+    if (percentage >= 80) {
+        message = `¡Excelente! Obtuviste ${score} de ${filteredQuestions.length} (${percentage}%)`;
+    } else if (percentage >= 60) {
+        message = `Buen trabajo. Obtuviste ${score} de ${filteredQuestions.length} (${percentage}%)`;
+    } else if (percentage >= 40) {
+        message = `Puedes mejorar. Obtuviste ${score} de ${filteredQuestions.length} (${percentage}%)`;
+    } else {
+        message = `Necesitas estudiar más. Obtuviste ${score} de ${filteredQuestions.length} (${percentage}%)`;
+    }
+
+    resultDiv.innerHTML = `
+        <h2>Resultados del Examen</h2>
+        <p>${message}</p>
+        <p>Tiempo utilizado: ${formatTime(120 * 60 - timeLeft)}</p>
+        <p>Preguntas marcadas para revisión: ${markedQuestions.filter(m => m).length}</p>
+        <hr>
+        <h3 style="color: green;">✔️ Respuestas Correctas (${score})</h3>
+        ${correctList}
+        <hr>
+        <h3 style="color: red;">❌ Respuestas Incorrectas (${filteredQuestions.length - score})</h3>
+        ${incorrectList}
+    `;
+    resultDiv.style.display = 'block';
+
+    // Ocultar preguntas y botones de navegación
+    questionsContainer.style.display = 'none';
+    prevBtn.style.display = 'none';
+    nextBtn.style.display = 'none';
+    submitBtn.style.display = 'none';
+    markBtn.style.display = 'none';
+}
+
+        // Formatear tiempo (mm:ss)
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Iniciar la aplicación cuando el DOM esté listo
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
